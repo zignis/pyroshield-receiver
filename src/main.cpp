@@ -20,8 +20,8 @@ typedef struct LoRa_Payload {
     uint16_t co2_ppm{};
     uint16_t pressure{};
     uint16_t bmp280_altitude{};
-    uint8_t bmp280_temp{};
-    uint8_t dht22_temp{};
+    uint16_t bmp280_temp{};
+    uint16_t dht22_temp{};
     uint8_t humidity{};
     uint16_t gps_altitude{};
     float gps_lat{};
@@ -29,7 +29,7 @@ typedef struct LoRa_Payload {
     uint16_t gps_satellites{};
 
     /* Power */
-    uint8_t battery_temp{};
+    uint16_t battery_temp{};
     uint16_t battery_voltage{};
     uint16_t charger_voltage{};
 
@@ -98,10 +98,10 @@ void print_payload(const LoRa_Payload &payload) {
     Serial.println(payload.bmp280_altitude);
 
     Serial.print("BMP280 temperature: ");
-    Serial.println(payload.bmp280_temp);
+    Serial.println(static_cast<float>(payload.bmp280_temp) / 10, 1);
 
     Serial.print("DHT22 temperature: ");
-    Serial.println(payload.dht22_temp);
+    Serial.println(static_cast<float>(payload.dht22_temp) / 10, 1);
 
     Serial.print("Humidity: ");
     Serial.println(payload.humidity);
@@ -126,13 +126,13 @@ void print_payload(const LoRa_Payload &payload) {
 
     // Power
     Serial.print("Battery temperature: ");
-    Serial.println(payload.battery_temp);
+    Serial.println(static_cast<float>(payload.battery_temp) / 10, 1);
 
     Serial.print("Battery voltage: ");
-    Serial.println(payload.battery_voltage);
+    Serial.println(static_cast<float>(payload.battery_voltage) / 100, 2);
 
     Serial.print("Charger voltage: ");
-    Serial.println(payload.charger_voltage);
+    Serial.println(static_cast<float>(payload.charger_voltage) / 100, 2);
 
     // System
     Serial.print("Memory usage: ");
@@ -141,3 +141,4 @@ void print_payload(const LoRa_Payload &payload) {
     Serial.println("____________________");
     Serial.println("");
 }
+
