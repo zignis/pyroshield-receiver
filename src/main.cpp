@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <SPI.h>
 #include <LoRa.h>
 
 #define LORA_FREQ 433E6 // LoRa module frequency (433 MHz)
@@ -7,8 +6,9 @@
 #define LORA_SS_PIN 10
 #define LORA_RESET_PIN 9
 #define LORA_DIO0_PIN 2
+#define LED_PIN 8
 
-typedef struct LoRa_Payload {
+typedef struct __attribute__((__packed__)) LoRa_Payload {
     /* Header */
     byte forwarder_id = 0;
     byte transmitter_id = 0;
@@ -41,18 +41,22 @@ typedef struct LoRa_Payload {
 void print_payload(const LoRa_Payload &payload);
 
 void setup() {
+    pinMode(LED_PIN, OUTPUT);
+
     Serial.begin(9600);
 
     while (!Serial) {
     }
 
     LoRa.setPins(LORA_SS_PIN, LORA_RESET_PIN, LORA_DIO0_PIN);
-    LoRa.setSyncWord(LORA_SYNC_WORD);
 
     if (!LoRa.begin(LORA_FREQ)) {
         Serial.println("LoRa init failed.");
         exit(EXIT_FAILURE);
     }
+
+    LoRa.enableCrc();
+    LoRa.setSyncWord(LORA_SYNC_WORD);
 
     Serial.println("LoRa init succeeded.");
 }
@@ -61,9 +65,13 @@ void loop() {
     const int packet_size = LoRa.parsePacket();
 
     if (packet_size) {
+        digitalWrite(LED_PIN, HIGH);
+
         LoRa_Payload data;
         LoRa.readBytes(reinterpret_cast<uint8_t *>(&data), packet_size);
         print_payload(data);
+
+        digitalWrite(LED_PIN, LOW);
     }
 }
 
