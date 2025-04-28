@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <LoRa.h>
+#include <ArduinoJson.h>
+
+#define DEBUG_MODE false
 
 #define LORA_FREQ 433E6 // LoRa module frequency (433 MHz)
 #define LORA_SYNC_WORD 0xB4 // Sync word for this network
@@ -37,8 +40,9 @@ typedef struct __attribute__((__packed__)) LoRa_Payload {
     uint16_t memory_usage{};
 } LoRa_Payload;
 
+void send_payload_json(const LoRa_Payload &payload);
 
-void print_payload(const LoRa_Payload &payload);
+void debug_print_payload(const LoRa_Payload &payload);
 
 void setup() {
     pinMode(LED_PIN, OUTPUT);
@@ -51,14 +55,19 @@ void setup() {
     LoRa.setPins(LORA_SS_PIN, LORA_RESET_PIN, LORA_DIO0_PIN);
 
     if (!LoRa.begin(LORA_FREQ)) {
-        Serial.println("LoRa init failed.");
+        if (DEBUG_MODE) {
+            Serial.println("LoRa init failed.");
+        }
+
         exit(EXIT_FAILURE);
     }
 
     LoRa.enableCrc();
     LoRa.setSyncWord(LORA_SYNC_WORD);
 
-    Serial.println("LoRa init succeeded.");
+    if (DEBUG_MODE) {
+        Serial.println("LoRa init succeeded.");
+    }
 }
 
 void loop() {
@@ -69,13 +78,53 @@ void loop() {
 
         LoRa_Payload data;
         LoRa.readBytes(reinterpret_cast<uint8_t *>(&data), packet_size);
-        print_payload(data);
+
+        if (DEBUG_MODE) {
+            debug_print_payload(data);
+        } else {
+            send_payload_json(data);
+        }
 
         digitalWrite(LED_PIN, LOW);
     }
 }
 
-void print_payload(const LoRa_Payload &payload) {
+void send_payload_json(const LoRa_Payload &payload) {
+    StaticJsonDocument<256> doc;
+
+    doc["device_id"] = payload.transmitter_id;
+    doc["forwarder_id"] = payload.forwarder_id;
+    doc["message_id"] = payload.message_id;
+    doc["allow_forwarding"] = payload.allow_forwarding;
+    doc["ttl"] = payload.ttl;
+    doc["co2_ppm"] = payload.co2_ppm;
+    doc["pressure"] = payload.pressure;
+
+    const JsonObject bmp280 = doc.createNestedObject("bmp280");
+    bmp280["altitude"] = payload.bmp280_altitude;
+    bmp280["temp"] = payload.bmp280_temp;
+
+    const JsonObject dht22 = doc.createNestedObject("dht22");
+    dht22["temp"] = payload.dht22_temp;
+    dht22["humidity"] = payload.humidity;
+
+    const JsonObject gps = doc.createNestedObject("gps");
+    gps["altitude"] = payload.gps_altitude;
+    gps["lat"] = payload.gps_lat;
+    gps["lng"] = payload.gps_lng;
+    gps["satellites"] = payload.gps_satellites;
+
+    const JsonObject battery = doc.createNestedObject("battery");
+    battery["temp"] = payload.battery_temp;
+    battery["voltage"] = payload.battery_voltage;
+    doc["charger"]["voltage"] = payload.charger_voltage;
+    doc["sys"]["mem_usage"] = payload.memory_usage;
+
+    serializeJson(doc, Serial);
+    Serial.println(); // Newline to indicate the end of message.
+}
+
+void debug_print_payload(const LoRa_Payload &payload) {
     Serial.println("");
     Serial.println("____________________");
 
