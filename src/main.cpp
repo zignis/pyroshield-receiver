@@ -102,22 +102,22 @@ void send_payload_json(const LoRa_Payload &payload) {
 
     const JsonObject bmp280 = doc.createNestedObject("bmp280");
     bmp280["altitude"] = payload.bmp280_altitude;
-    bmp280["temp"] = payload.bmp280_temp;
+    bmp280["temp"] = static_cast<float>(payload.bmp280_temp) / 10;
 
     const JsonObject dht22 = doc.createNestedObject("dht22");
-    dht22["temp"] = payload.dht22_temp;
+    dht22["temp"] = static_cast<float>(payload.dht22_temp) / 10;
     dht22["humidity"] = payload.humidity;
 
     const JsonObject gps = doc.createNestedObject("gps");
     gps["altitude"] = payload.gps_altitude;
-    gps["lat"] = payload.gps_lat;
-    gps["lng"] = payload.gps_lng;
+    gps["lat"] = String(payload.gps_lat, 6);
+    gps["lng"] = String(payload.gps_lng, 6);
     gps["satellites"] = payload.gps_satellites;
 
     const JsonObject battery = doc.createNestedObject("battery");
-    battery["temp"] = payload.battery_temp;
-    battery["voltage"] = payload.battery_voltage;
-    doc["charger"]["voltage"] = payload.charger_voltage;
+    battery["temp"] = static_cast<float>(payload.battery_temp) / 10;
+    battery["voltage"] = static_cast<float>(payload.battery_voltage) / 100;
+    doc["charger"]["voltage"] = static_cast<float>(payload.charger_voltage) / 100;
     doc["sys"]["mem_usage"] = payload.memory_usage;
 
     serializeJson(doc, Serial);
