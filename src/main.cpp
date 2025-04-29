@@ -40,6 +40,9 @@ typedef struct __attribute__((__packed__)) LoRa_Payload {
     uint16_t memory_usage{};
 } LoRa_Payload;
 
+
+void receive_cb(int packet_size);
+
 void send_payload_json(const LoRa_Payload &payload, int rssi, float snr);
 
 void debug_print_payload(const LoRa_Payload &payload);
@@ -64,6 +67,8 @@ void setup() {
 
     LoRa.enableCrc();
     LoRa.setSyncWord(LORA_SYNC_WORD);
+    LoRa.onReceive(receive_cb);
+    LoRa.receive();
 
     if (DEBUG_MODE) {
         Serial.println("LoRa init succeeded.");
@@ -71,8 +76,9 @@ void setup() {
 }
 
 void loop() {
-    const int packet_size = LoRa.parsePacket();
+}
 
+void receive_cb(const int packet_size) {
     if (packet_size) {
         digitalWrite(LED_PIN, HIGH);
 
