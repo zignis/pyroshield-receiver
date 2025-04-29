@@ -40,7 +40,7 @@ typedef struct __attribute__((__packed__)) LoRa_Payload {
     uint16_t memory_usage{};
 } LoRa_Payload;
 
-void send_payload_json(const LoRa_Payload &payload);
+void send_payload_json(const LoRa_Payload &payload, int rssi, float snr);
 
 void debug_print_payload(const LoRa_Payload &payload);
 
@@ -82,14 +82,16 @@ void loop() {
         if (DEBUG_MODE) {
             debug_print_payload(data);
         } else {
-            send_payload_json(data);
+            const auto rssi = LoRa.packetRssi();
+            const auto snr = LoRa.packetSnr();
+            send_payload_json(data, rssi, snr);
         }
 
         digitalWrite(LED_PIN, LOW);
     }
 }
 
-void send_payload_json(const LoRa_Payload &payload) {
+void send_payload_json(const LoRa_Payload &payload, int rssi, float snr) {
     StaticJsonDocument<256> doc;
 
     doc["device_id"] = payload.transmitter_id;
@@ -97,6 +99,10 @@ void send_payload_json(const LoRa_Payload &payload) {
     doc["message_id"] = payload.message_id;
     doc["allow_forwarding"] = payload.allow_forwarding;
     doc["ttl"] = payload.ttl;
+
+    doc["rssi"] = rssi;
+    doc["snr"] = snr;
+
     doc["co2_ppm"] = payload.co2_ppm;
     doc["pressure"] = payload.pressure;
 
