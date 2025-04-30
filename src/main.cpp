@@ -67,6 +67,7 @@ void setup() {
 
     LoRa.enableCrc();
     LoRa.setSyncWord(LORA_SYNC_WORD);
+    LoRa.setSpreadingFactor(12);
     LoRa.onReceive(receive_cb);
     LoRa.receive();
 
@@ -97,7 +98,7 @@ void receive_cb(const int packet_size) {
     }
 }
 
-void send_payload_json(const LoRa_Payload &payload, int rssi, float snr) {
+void send_payload_json(const LoRa_Payload &payload, const int rssi, const float snr) {
     StaticJsonDocument<256> doc;
 
     doc["device_id"] = payload.transmitter_id;
